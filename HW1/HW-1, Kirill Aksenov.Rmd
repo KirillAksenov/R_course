@@ -1,0 +1,162 @@
+---
+title: "HW-1. Kirill Aksenov"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(lme4)
+library(vcd)
+```
+
+#1. [v] elision
+
+```{r}
+elision <- read.csv("http://goo.gl/aE3yVg", encoding="UTF-8")
+head(elision)
+```
+
+```{r}
+#1.1 Plot the graph of the correlation between [v] elision and the type of phrasal position.
+
+elision %>%
+  ggplot(aes(v.elision, fill = position)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Correlation between [v] elision and the type of phrasal position",
+       x = "[v] elision", y = "number of cases")
+
+```
+
+
+
+```{r}
+#1.2 Plot another graph of correlation between [v] elision and the type of phrasal position.
+
+elision %>%
+  group_by(v.elision, position) %>%
+  summarise(number = n()) %>%
+  ggplot(aes(v.elision, position, label = number))+
+  geom_point(aes(size = number), color = "lightblue")+
+  geom_text()+
+  scale_size(range = c(10, 30))+
+  guides(size = F, color = F)+
+  labs(title = "Correlation between [v] elision and phrasal position",
+       x = "[v] elision", y = "phrasal position")
+
+```
+
+
+```{r}
+#1.3 The root of the second group of words that has the lowest number of [v] elisions in strong phrasal position is
+head(elision)
+elision %>%
+  filter(group == "second", position == "strong", v.elision == "yes") %>%
+  group_by(word)%>%
+  summarise(number = n())
+  
+```
+
+```{r}
+#1.4 Visualize the distribution of cases of [v] elision in third group in strong phrasal position.
+elision %>%
+  filter(group == "third", position == "strong") %>%
+  ggplot(aes(v.elision, fill = word)) +
+  geom_bar(position = "dodge") +
+  labs(title = "The correlation between [v] elision and the root",
+       x = "[v] elision", y = "number of cases",
+       subtitle = "Strong phrasal position, Third group")
+```
+
+
+#2. The length of the vocal tract
+
+```{r}
+vtl <- read.csv("https://goo.gl/LQAyJ9")
+head(vtl)
+```
+
+```{r}
+#2.1 Plot the graph of the correlation between length of the vocal tract and type of the vowel. Add the line representing the mean value of the length of vocal tract among all informants.
+
+colnames(vtl)[4:8] <- c("a", "e", "i", "o", "u")
+vtl %>%
+  gather(vowel, length, a:u) ->
+  vtl.long
+
+meanlenvoctr <- mean(vtl.long$length)
+
+vtl.long %>%
+  ggplot(aes(vowel, length)) +
+  geom_boxplot()+
+  geom_hline(yintercept = meanlenvoctr, linetype = 2)+
+  labs(title = "Correlation between length of the vocal tract and vowel type",
+       x = "vowel type", y = "length of the vocal tract")
+```
+
+```{r}
+#2.2 In [Wikham, Stryjewski 2011] there are different types of boxplot used, for example bean plot. Think of the way of plotting bean plot using R. The dataset is the same.
+
+vtl.long %>%
+  ggplot(aes(vowel, length)) +
+  geom_violin(trim = FALSE, fill = "lightblue") +
+  geom_point(shape = "—", size = 4) +
+  labs(title = "Correlation between length of the vocal tract and vowel type",
+       x = "vowel type", y = "length of the vocal tract")
+
+```
+
+
+```{r}
+#2.3 Plot the histograms on the basis of all measurements of the length of the vocal tract and color the values of each vowel differently
+
+
+ggplot(data = vtl.long[c(1,2,3,4,6)], aes(length))+
+geom_histogram(bins = nclass.FD(vtl.long[c(1,2,3,4,6)]$length),
+               fill = "lightblue")+
+geom_histogram(data = vtl.long, aes(length, fill = vowel),
+               bins = nclass.FD(vtl.long$length), show.legend=FALSE)+
+facet_wrap(~vowel)+
+labs(title = "The length of the vocal tract",
+       x = "vtl", y = "count")+
+theme_bw()
+
+```
+
+```{r}
+#2.4 Figure out what models of choosing the number of cells give the same result for the length of the vocal tract.
+
+ggplot(data = vtl.long[c(1,2,3,4,6)], aes(length))+
+geom_histogram(bins = nclass.Sturges(vtl.long[c(1,2,3,4,6)]$length),
+               fill = "lightblue")+
+geom_histogram(data = vtl.long, aes(length, fill = vowel),
+               bins = nclass.Sturges(vtl.long$length), show.legend=FALSE)+
+facet_wrap(~vowel)+
+labs(title = "The length of the vocal tract",
+       x = "vtl", y = "count")+
+theme_bw()
+
+ggplot(data = vtl.long[c(1,2,3,4,6)], aes(length))+
+geom_histogram(bins = nclass.scott(vtl.long[c(1,2,3,4,6)]$length),
+               fill = "lightblue")+
+geom_histogram(data = vtl.long, aes(length, fill = vowel),
+               bins = nclass.scott(vtl.long$length), show.legend=FALSE)+
+facet_wrap(~vowel)+
+labs(title = "The length of the vocal tract",
+       x = "vtl", y = "count")+
+theme_bw()
+
+```
+So the answer is [Sturges 1926] and [Freedman, Diaconis 1981], right?
+
+
+```{r}
+#2.5 Plot the graph of the length of the vocal tract for each speaker but instead of dots use a symbol of the vowel
+vtl.long %>%
+  ggplot(aes(ID, length, label = vowel)) +
+  geom_text()+
+  labs(title = "Length of the vocal tract for each speaker",
+       x = "speakers", y = "length of the vocal tract")
+
+```
+
