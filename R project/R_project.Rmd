@@ -1,0 +1,404 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+#The structure of the nound phrase in Russian Sign Language (RSL)
+
+The Greenberg’s Universal 20 has recently started being investigated in sign languages (so far Polish SL, American SL, Italian SL, Taiwan SL and Hong Kong SL). It has been proved that the modality of sign languages has several effects on the word order in NP. First of all, it implies higher variability of word orders than in spoken languages (Mantovan 2015, Zhang 2007).
+
+####Reminder:
+*"When any or all of the items (demonstrative, numeral, and descriptive adjective) precede the noun, they are always found in that order. If they follow, the order is either the same or its exact opposite."* (c) Greenberg, J. (1963). Some Universals of Grammar with Particular Reference to the Order of Meaningful Elements. In Greenberg, Joseph H. (ed.), Universals of Human Language, 73-113
+
+**Our aim** was to figure out, which orders in the nominal complex appear to be the most natural in RSL.
+
+One of the methods we used was the **acceptability judgements task**.
+We composed 4 questionnaires, each comprising 80 questions (36 target questions and 44 fillers).
+We used Likert scale, the informants had to evaluate each sentence and give it a score from 1 (totally ungrammatical) to 5 (perfect sentece).
+Btw, Likert scales approach is said to produce "*the most stable and reliable* acceptability measures and do so with smaller sample sizes than the other measures". (Langsford et al, 2018)
+
+```{r}
+library(tidyverse)
+library(irr)
+```
+
+First, let us look at the results we got.
+
+```{r}
+first = read.csv("test A.csv", encoding = "UTF-8", sep = ";")
+first_cleaned <- first[c(-1,-82)]
+rownames(first_cleaned) <- c("T1I1", "T1I2", "T1I3", "T1I4", "T1I5")
+
+
+second = read.csv("test B.csv", encoding = "UTF-8", sep = ";")
+second_cleaned <- second[c(-1,-82)]
+rownames(second_cleaned) <- c("T2I1", "T2I2", "T2I3", "T2I4")
+
+
+third = read.csv("test C.csv", encoding = "UTF-8", sep = ";")
+third_cleaned <- third[c(-1,-82)]
+rownames(third_cleaned) <- c("T3I1")
+
+
+fourth = read.csv("test D.csv", encoding = "UTF-8", sep = ";")
+fourth_cleaned <- fourth[c(-1,-82)]
+rownames(fourth_cleaned) <- c("T4I1", "T4I2")
+
+str(first_cleaned) #others look pretty similar
+
+```
+
+You might have notice two problems with my data. First, not all our informants had time to go through the whole questionnaire. Second, by accident, we inserted two questions twice: one target and one filler. Not enough to do within-participant reliability test, but more that enough to question our professionalism(
+
+Anyway, let's collect our data together and normalize it.
+I will use z-score in order to do this.
+[here's the formula I use]:(https://wikimedia.org/api/rest_v1/media/math/render/svg/3fae59e6af64fb5c102229fcf9034175bec85372)
+
+```{r}
+df <- data.frame(rbind(first_cleaned, second_cleaned, third_cleaned, fourth_cleaned))
+
+df$mean <- apply(df, 1, mean, na.rm=TRUE)
+df$st.dev <-  apply(df, 1, sd, na.rm=TRUE)
+norm.df <- data.frame(t((df[,1:80]-df[,81])/df[,82]))
+
+head(norm.df)
+
+```
+
+Now let's see wich word orders were rated by the informants better then others.
+
+```{r}
+poss.adj <- norm.df[c("Насколько.правильное.предложение...1.", "Насколько.правильное.предложение...2.", "Насколько.правильное.предложение...3.", "Насколько.правильное.предложение...4.", "Насколько.правильное.предложение...5.", "Насколько.правильное.предложение...6."),]
+poss.adj$mean <- apply(poss.adj, 1, mean, na.rm=TRUE)
+poss.adj$WO <- c("poss adj noun", "adj poss noun", "poss noun adj",
+                 "adj noun poss", "noun poss adj", "noun adj poss")
+
+
+head(poss.adj) #other tables are organized the same way
+```
+
+```{r}
+ggplot(data = poss.adj, aes(WO, mean)) +
+  geom_point()+
+  labs(title = "Position of possessee and adjective",
+       y = "rank", x = "word order")
+```
+
+```{r}
+num.adj <- norm.df[c("Насколько.правильное.предложение...7.", "Насколько.правильное.предложение...8.", "Насколько.правильное.предложение...9.", "Насколько.правильное.предложение...10.", "Насколько.правильное.предложение...11.", "Насколько.правильное.предложение...12."),]
+num.adj$mean <- apply(num.adj, 1, mean, na.rm=TRUE)
+num.adj$WO <- c("num adj noun", "adj num noun", "num noun adj", 
+                "adj noun num", "noun num adj", "noun adj num")
+
+ggplot(data = num.adj, aes(WO, mean)) +
+  geom_point()+
+  labs(title = "Position of numeral and adjective",
+       y = "rank", x = "word order")
+```
+```{r}
+num.poss <- norm.df[c("Насколько.правильное.предложение...13.", "Насколько.правильное.предложение...14.", "Насколько.правильное.предложение...15.", "Насколько.правильное.предложение...16.", "Насколько.правильное.предложение...17.", "Насколько.правильное.предложение...18."),]
+num.poss$mean <- apply(num.poss, 1, mean, na.rm=TRUE)
+num.poss$WO <- c("num poss noun", "poss num noun", "num noun poss", 
+                "poss noun num", "noun poss num", "noun num poss")
+
+ggplot(data = num.poss, aes(WO, mean)) +
+  geom_point()+
+  labs(title = "Position of numeral and possessee",
+       y = "rank", x = "word order")
+```
+
+```{r}
+dem.adj <- norm.df[c("Насколько.правильное.предложение...19.", "Насколько.правильное.предложение...20.", "Насколько.правильное.предложение...21.", "Насколько.правильное.предложение...22.", "Насколько.правильное.предложение...23.", "Насколько.правильное.предложение...24."),]
+dem.adj$mean <- apply(dem.adj, 1, mean, na.rm=TRUE)
+dem.adj$WO <- c("dem adj noun", "adj dem noun", "adj noun dem", 
+                "dem noun adj", "noun adj dem", "noun dem adj")
+
+ggplot(data = dem.adj, aes(WO, mean)) +
+  geom_point()+
+  labs(title = "Position of demonstrative and adjective",
+       y = "rank", x = "word order")
+```
+
+```{r}
+
+dem.num <- norm.df[c("Насколько.правильное.предложение...25.", "Насколько.правильное.предложение...26.", "Насколько.правильное.предложение...27.", "Насколько.правильное.предложение...28.", "Насколько.правильное.предложение...29.", "Насколько.правильное.предложение...30."),]
+dem.num$mean <- apply(dem.num, 1, mean, na.rm=TRUE)
+dem.num$WO <- c("dem num noun", "num dem noun", "num noun dem", 
+                "dem noun num", "noun dem num", "noun num dem")
+
+ggplot(data = dem.num, aes(WO, mean)) +
+  geom_point()+
+  labs(title = "Position of demonstrative and numeral",
+       y = "rank", x = "word order")
+```
+
+```{r}
+eval.size <- norm.df[c("Насколько.правильное.предложение...31.", "Насколько.правильное.предложение...32.", "Насколько.правильное.предложение...33.", "Насколько.правильное.предложение...34.", "Насколько.правильное.предложение...35.", "Насколько.правильное.предложение...36."),]
+eval.size$mean <- apply(eval.size, 1, mean, na.rm=TRUE)
+eval.size$WO <- c("eval size noun", "size eval noun", "eval noun siz", 
+                "size noun eval", "noun eval size", "noun size eval")
+
+ggplot(data = eval.size, aes(WO, mean)) +
+  geom_point()+
+  labs(title = "Position of evaluation and size adjectives",
+       y = "rank", x = "word order")
+
+
+```
+
+Maybe it will be better to plot them all on the one page.
+Unfortunetely, layout() function didn't work for me with ggplot, so I googled a more sophisticated solution.
+
+```{r}
+library(ggplot2)
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+p1 <- ggplot(data = poss.adj, aes(WO, mean)) +
+  geom_text(label = poss.adj$WO)+
+  labs(title = "Position of possessee and adjective",
+       y = "rank", x = "word order")
+
+p2 <- ggplot(data = num.adj, aes(WO, mean)) +
+  geom_text(label = num.adj$WO)+
+  labs(title = "Position of numeral and adjective",
+       y = "rank", x = "word order")
+
+p3 <- ggplot(data = num.poss, aes(WO, mean)) +
+  geom_text(label = num.poss$WO)+
+  labs(title = "Position of numeral and possessee",
+       y = "rank", x = "word order")
+
+
+p4 <-ggplot(data = dem.adj, aes(WO, mean)) +
+  geom_text(label = dem.adj$WO)+
+  labs(title = "Position of demonstrative and adjective",
+       y = "rank", x = "word order")
+
+
+p5 <- ggplot(data = dem.num, aes(WO, mean)) +
+  geom_text(label = dem.num$WO)+
+  labs(title = "Position of demonstrative and numeral",
+       y = "rank", x = "word order")
+
+p6 <- ggplot(data = eval.size, aes(WO, mean)) +
+  geom_text(label = eval.size$WO)+
+  labs(title = "Position of evaluation and size adjectives",
+       y = "rank", x = "word order")
+
+multiplot(p1, p2, p3, p4, p5, p6, cols=2)
+
+```
+
+I also tried facets, but the result dissapointed me(
+
+```{r}
+poss.adj$type <- c("poss.adj", "poss.adj", "poss.adj", 
+                   "poss.adj", "poss.adj", "poss.adj")
+
+num.adj$type <- c("num.adj", "num.adj", "num.adj", 
+                  "num.adj", "num.adj", "num.adj")
+
+num.poss$type <- c("num.poss", "num.poss", "num.poss", 
+                   "num.poss", "num.poss", "num.poss")
+
+dem.adj$type <- c("dem.adj", "dem.adj", "dem.adj", 
+                  "dem.adj", "dem.adj", "dem.adj")
+
+dem.num$type <- c("dem.num", "dem.num", "dem.num", 
+                  "dem.num", "dem.num", "dem.num")
+
+eval.size$type <- c("eval.zise", "eval.zise", "eval.zise", 
+                    "eval.zise", "eval.zise", "eval.zise")
+
+word.orders <- rbind(poss.adj, num.adj, num.poss, dem.adj, dem.num, eval.size)
+
+word.orders %>% 
+  ggplot(aes(WO, mean))+
+  geom_text(label = word.orders$WO, size = 2) + 
+  facet_wrap(~type, scales = "free_x")
+
+```
+
+
+This is it?
+No, wait, it will be nice to check how reprodiciple my results are. 
+First, remember, we has two repeating questions in our data. Let's see whether the evaluations of these questions correlate with each other (of course we are expecting that they will perfectly correlate).
+
+```{r}
+first.time <- norm.df[c("Насколько.правильное.предложение...2.", "Насколько.правильное.предложение...62."),]
+second.time <- norm.df[c("Насколько.правильное.предложение...2..1", "Насколько.правильное.предложение...62..1"),]
+
+first.time
+second.time
+```
+
+Let us now leave only such cases, that were evaluated twice and get rid of NA's.
+```{r}
+ft <- first.time[is.na(second.time[1:2,]) == F]
+st <- second.time[is.na(first.time[1:2,]) == F]
+ft.cl <- ft[!is.na(ft)]
+st.cl <- st[!is.na(st)]
+ft.cl
+st.cl
+```
+```{r}
+cor.test(ft.cl, st.cl)
+```
+
+```{r}
+ggplot(data = data.frame(cbind(st.cl,ft.cl)), aes(st.cl, ft.cl)) +
+  geom_point()+
+  labs(title = "Within participant reliability",
+       subtitle = "Score correlations between first and second evaluation of the same sentence", y = "First answer", x = "Second answer")
+```
+
+Not so good, right? But actually this means nothing because of the small size of the sample. Moreover, we can simply propose some explainations fore the picture that we see. Maybe we had too long and too boring questionnaire, and the informants started getting tired and thus more tolerant to the sentences we propose.
+
+Well, let's try to see that.
+
+
+
+```{r}
+ac.j <- data.frame(t(norm.df))
+ac.j$test <- c("test 1", "test 1", "test 1", "test 1", "test 1", "test 2", "test 2", "test 3", "test 4", "test 3", "test 4", "test 4")
+ac.j$informant <- c("informant 1", "informant 2", "informant 3", "informant 4", "informant 5", "informant 6", "informant 7", "informant 8", "informant 9", "informant 10", "informant 11", "informant 12")
+
+
+ac.j %>% 
+  gather(question, rank, Насколько.правильное.предложение...86.:Насколько.правильное.предложение...31.) ->
+  ac.j.long
+head(ac.j.long)
+
+```
+
+```{r}
+ggplot(data = ac.j.long, aes(question, rank)) +
+  geom_point(aes(color = informant))+
+  labs(title = "Sentences evaluation")
+```
+
+The graph seems to show the opposite: it looks like the latter questions are ranked lover then the first one. But it will be better to prove it in more formal way.
+
+It will be interesting to construct a linear mixed-effect model, showing if sentence acceptability rank really goes down closer to the end of a questionnaire (because according to the picture it looks like it does). But in order to do so we have to put additional information to the data frame. Namely, to add question number in the questionnaire (because it will be numeric variable) and the info on whether it is a target question or a filler.
+If we do so, we could make the following model:
+**lmer(rank ~ question.number + (1+rank|test) + (1+rank|informant) + (1+rank|is.target))**
+
+Let's first add a new variable representing question number. It should be easy...
+```{r}
+a <- c(1:80)
+b <- names(ac.j)[1:80]
+
+names(b) <- a
+names(b[2])
+l <- list()
+```
+for (i in ac.j.long$question){
+  for (j in b){
+    if (names(b[j]) == i){
+      (l <- l + b[j])
+      
+    }
+  }
+}
+
+
+
+But it doesn't work(
+**Error in if (names(b[j]) == i) { : missing value where TRUE/FALSE needed**
+At least I tried...
+
+
+But we have also some other questions to consider:
+
+1) Do the informants evaluate target sentences the same way as fillers. Because if they don't, it will influence our normalization.
+2) Is there any test-bias?
+3) Do different participants among the same test evaluate sentences in the same way?
+
+```{r}
+
+ex.names <- read.csv("examples_names.csv", encoding = "UTF-8", sep=";")
+
+#names(df)
+#names(ex.names)
+#l <- ex.names[1,]
+#View(l)
+#df$ex.name <- l
+
+```
+
+The problem with the second and the third questions consists in fact that there is a lot of NAs in my data, and some methods don't work with it.
+
+```{r}
+test.a.norm <- norm.df[1:5]
+test.b.norm <- norm.df[6:9]
+test.c.norm <- norm.df[10]
+test.d.norm <- norm.df[11:12]
+
+agree(na.omit(test.b.norm))
+agree(na.omit(test.d.norm))
+```
+
+```{r}
+data.frame(cor(na.omit(test.b.norm), method = "kendall"))
+data.frame(cor(na.omit(test.d.norm), method = "kendall"))
+```
+
+```{r}
+icc(na.omit(test.b.norm), model = "twoway", type = "agreement")
+icc(na.omit(test.d.norm), model = "twoway", type = "agreement")
+```
+
+
+
+
+###References:
+
+1) Langsford, S., Perfors, A., Hendrickson, A. T., Kennedy, L. A., & Navarro, D. J. (2018). Quantifying sentence acceptability measures: Reliability, bias, and variability. Glossa: a journal of general linguistics, 3(1).
+
+2) Mantovan, L. (2015). Nominal modification in Italian Sign Language (LIS).
+
+3) Zhang, N. (2007). Universal 20 and Taiwan Sign Language. Sign Language & Linguistics 10, 55–81.
